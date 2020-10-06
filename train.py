@@ -1,12 +1,12 @@
 import numpy as np
 
 import sys
+
 sys.path.append('..')
 from utils import train
 
 
 def main():
-
     data = np.load('data.npy')
     unigram_distribution = np.load('unigram_distribution.npy')
     word_vectors = np.load('word_vectors.npy')
@@ -25,7 +25,7 @@ def main():
     train(
         data, unigram_distribution, word_vectors,
         doc_weights_init, n_topics=25,
-        batch_size=1024*7, n_epochs=123,
+        batch_size=1024 * 7, n_epochs=123,
         lambda_const=500.0, num_sampled=15,
         topics_weight_decay=1e-2,
         topics_lr=1e-3, doc_weights_lr=1e-3, word_vecs_lr=1e-3,

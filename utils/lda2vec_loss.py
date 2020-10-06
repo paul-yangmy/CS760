@@ -44,7 +44,7 @@ class loss(nn.Module):
 
         # document distributions (logits) over the topics
         self.doc_weights = nn.Embedding(n_documents, self.n_topics)
-        init.normal(self.doc_weights.weight, std=DOC_WEIGHTS_INIT)
+        init.normal_(self.doc_weights.weight, std=DOC_WEIGHTS_INIT)
 
         self.neg = negative_sampling_loss(word_vectors, unigram_distribution, num_sampled)
 
