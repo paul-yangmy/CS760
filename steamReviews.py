@@ -19,7 +19,7 @@ def steamReviews(appId, numOfSets, reviewType):
         # english reviews only (there's a language differentiation problem of steam when sort by helpfulness)
         'cursor': '*',  # pass * for the first set
         'review_type': 'all',  # positive and negative ones
-        'num_perpage': '20'  # num of reviews to be returned (could be up to 100)
+        'num_perpage': '100'  # num of reviews to be returned (could be up to 100)
     }
     if reviewType == 0:
         payload['review_type'] = 'negative'
@@ -72,6 +72,6 @@ def steamReviews(appId, numOfSets, reviewType):
     return (steamDf)
 
 
-rvData = steamReviews('374320', 200, 2)
+rvData = steamReviews('374320', 20, 2)
 
-rvData.to_csv("news.csv")
+rvData.to_csv("reviews.csv")
