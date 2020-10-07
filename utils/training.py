@@ -8,12 +8,13 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
 from .lda2vec_loss import loss, topic_embedding
 
-
 # negative sampling power
 BETA = 0.75
 
 # i add some noise to the gradient
 ETA = 0.4
+
+
 # i believe this helps optimization.
 # the idea is taken from here:
 # https://arxiv.org/abs/1511.06807
@@ -22,7 +23,7 @@ ETA = 0.4
 
 def train(data, unigram_distribution, word_vectors,
           doc_weights_init=None, n_topics=25,
-          batch_size=4096, n_epochs=200,
+          batch_size=4096, n_epochs=50,
           lambda_const=100.0, num_sampled=15,
           topics_weight_decay=1e-2,
           topics_lr=1e-3, doc_weights_lr=1e-3, word_vecs_lr=1e-3,
@@ -68,11 +69,11 @@ def train(data, unigram_distribution, word_vectors,
     weights = np.zeros((len(unique_docs),), 'float32')
     for i, j in enumerate(unique_docs):
         # longer a document -> lower the document weight when computing loss
-        weights[j] = 1.0/np.log(counts[i])
+        weights[j] = 1.0 / np.log(counts[i])
     weights = torch.FloatTensor(weights).cuda()
 
     # prepare word distribution
-    unigram_distribution = torch.FloatTensor(unigram_distribution**BETA)
+    unigram_distribution = torch.FloatTensor(unigram_distribution ** BETA)
     unigram_distribution /= unigram_distribution.sum()
     unigram_distribution = unigram_distribution.cuda()
 
@@ -84,6 +85,7 @@ def train(data, unigram_distribution, word_vectors,
     )
 
     # create a lda2vec model
+    topics = topic_embedding(n_topics, embedding_dim)
     topics = topic_embedding(n_topics, embedding_dim)
     word_vectors = torch.FloatTensor(word_vectors)
     model = loss(
@@ -104,7 +106,7 @@ def train(data, unigram_distribution, word_vectors,
          'lr': word_vecs_lr}
     ]
     optimizer = optim.Adam(params)
-    n_batches = math.ceil(n_windows/batch_size)
+    n_batches = math.ceil(n_windows / batch_size)
     print('number of batches:', n_batches, '\n')
     losses = []  # collect all losses here
     doc_weights_shape = model.doc_weights.weight.size()
@@ -131,8 +133,8 @@ def train(data, unigram_distribution, word_vectors,
                 total_loss.backward()
 
                 # level of noise becomes lower as training goes on
-                sigma = ETA/epoch**0.55
-                noise = sigma*Variable(torch.randn(doc_weights_shape).cuda())
+                sigma = ETA / epoch ** 0.55
+                noise = sigma * Variable(torch.randn(doc_weights_shape).cuda())
                 model.doc_weights.weight.grad += noise
 
                 # gradient clipping
@@ -142,10 +144,10 @@ def train(data, unigram_distribution, word_vectors,
                 optimizer.step()
 
                 n_samples = batch.size(0)
-                running_neg_loss += neg_loss.data[0]*n_samples
-                running_dirichlet_loss += dirichlet_loss.data[0]*n_samples
+                running_neg_loss += neg_loss.data * n_samples
+                running_dirichlet_loss += dirichlet_loss.data * n_samples
 
-            losses += [(epoch, running_neg_loss/n_windows, running_dirichlet_loss/n_windows)]
+            losses += [(epoch, running_neg_loss / n_windows, running_dirichlet_loss / n_windows)]
             print('{0:.2f} {1:.2f}'.format(*losses[-1][1:]))
             if epoch % save_every == 0:
                 print('\nsaving!\n')
@@ -176,3 +178,6 @@ class SimpleDataset(Dataset):
 
     def __len__(self):
         return self.data_tensor.size(0)
+
+
+
